@@ -10,16 +10,162 @@
 <body>
     <header>
         <div class="header-inner">
-            <div>
-                <h1>Service Design Exhibition</h1>
-                <p>A showcase of innovative projects from the Service Design class.</p>
+            <div class="hero-copy">
+                <div class="hero-avatar" aria-label="Header image placeholder"></div>
+                <h1>Title</h1>
+                <p>Subtitle</p>
             </div>
             <button id="theme-toggle" type="button" aria-label="Toggle color mode">Dark Mode</button>
         </div>
     </header>
 
-    <main id="project-gallery">
-    </main>
+    <nav class="tab-nav" aria-label="Project sections">
+        <div class="tab-nav-inner">
+            <button class="tab-button active" type="button" data-tab="research" aria-selected="true">Research</button>
+            <button class="tab-button" type="button" data-tab="gui-scenario" aria-selected="false">GUI &amp; Scenario</button>
+        </div>
+    </nav>
+
+    <div class="tab-panels">
+        <section class="tab-panel active" data-panel="research">
+    <section class="info-section">
+        <h2 class="section-title">Background & Concept</h2>
+        <div class="info-grid">
+            <article class="info-card">
+                <p>Write the project background here.</p>
+            </article>
+            <article class="info-card">
+                <p>Write the concept description here.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="branding-section">
+        <h2 class="section-title">Branding</h2>
+        <div class="branding-card" aria-label="Branding image placeholder"></div>
+    </section>
+
+    <section class="keyword-section">
+        <h2 class="section-title">Keywords</h2>
+        <div class="keyword-grid">
+            <article class="keyword-card">
+                <h3>Keyword 1</h3>
+                <div class="keyword-image" aria-label="Keyword image placeholder 1"></div>
+                <div class="keyword-copy">
+                    <h4>Title</h4>
+                    <p>Write supporting text for keyword 1 here.</p>
+                </div>
+            </article>
+            <article class="keyword-card">
+                <h3>Keyword 2</h3>
+                <div class="keyword-image" aria-label="Keyword image placeholder 2"></div>
+                <div class="keyword-copy">
+                    <h4>Title</h4>
+                    <p>Write supporting text for keyword 2 here.</p>
+                </div>
+            </article>
+            <article class="keyword-card">
+                <h3>Keyword 3</h3>
+                <div class="keyword-image" aria-label="Keyword image placeholder 3"></div>
+                <div class="keyword-copy">
+                    <h4>Title</h4>
+                    <p>Write supporting text for keyword 3 here.</p>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <section class="persona-section">
+        <h2 class="section-title">Persona</h2>
+        <div class="persona-grid">
+            <article class="persona-card persona-profile">
+                <div class="persona-image" aria-label="Persona image placeholder 1"></div>
+                <div class="persona-meta">
+                    <p><strong>Name</strong>: Write name here</p>
+                    <p><strong>Age</strong>: Write age here</p>
+                    <p><strong>Job</strong>: Write job here</p>
+                </div>
+            </article>
+            <article class="persona-card persona-quote">
+                <h3>Persona's Voice</h3>
+                <blockquote>"It is too hard."</blockquote>
+            </article>
+            <article class="persona-card persona-notes">
+                <h3>Notes</h3>
+                <p>Write additional persona details here.</p>
+            </article>
+            <article class="persona-card persona-profile">
+                <div class="persona-image" aria-label="Persona image placeholder 2"></div>
+                <div class="persona-meta">
+                    <p><strong>Name</strong>: Write second name here</p>
+                    <p><strong>Age</strong>: Write second age here</p>
+                    <p><strong>Job</strong>: Write second job here</p>
+                </div>
+            </article>
+            <article class="persona-card persona-quote">
+                <h3>Persona's Voice</h3>
+                <blockquote>"I need a simpler way."</blockquote>
+            </article>
+            <article class="persona-card persona-notes">
+                <h3>Notes</h3>
+                <p>Write additional persona details for the second user here.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="interview-section">
+        <h2 class="section-title">Interview</h2>
+        <div class="interview-rows">
+            <div class="interview-row interview-row-primary">
+                <article class="interview-card interview-person">
+                    <div class="interview-image" aria-label="Interview subject image placeholder 1"></div>
+                    <p class="interview-name">Name</p>
+                </article>
+                <article class="interview-card interview-copy">
+                    <p>Write the first interview summary or transcript here.</p>
+                </article>
+            </div>
+            <div class="interview-row interview-row-secondary">
+                <article class="interview-card interview-copy">
+                    <p>Write the second interview summary or transcript here.</p>
+                </article>
+                <article class="interview-card interview-person">
+                    <div class="interview-image" aria-label="Interview subject image placeholder 2"></div>
+                    <p class="interview-name">Name</p>
+                </article>
+            </div>
+        </div>
+        <div class="interview-image-grid">
+            <div class="interview-gallery-card" aria-label="Interview gallery image placeholder 1"><span>Text 1</span></div>
+            <div class="interview-gallery-card" aria-label="Interview gallery image placeholder 2"><span>Text 2</span></div>
+            <div class="interview-gallery-card" aria-label="Interview gallery image placeholder 3"><span>Text 3</span></div>
+        </div>
+    </section>
+
+    <section class="journey-section">
+        <h2 class="section-title">Journey Map</h2>
+        <div class="journey-map-card" aria-label="Journey map image placeholder"></div>
+    </section>
+
+    <section class="architecture-section">
+        <h2 class="section-title">Information Architecture &amp; User Flow Chart</h2>
+        <div class="architecture-map-card" aria-label="Information architecture and user flow chart image placeholder"></div>
+    </section>
+
+    <section class="blueprint-section">
+        <h2 class="section-title">Service Blueprint</h2>
+        <div class="blueprint-map-card" aria-label="Service blueprint image placeholder"></div>
+    </section>
+
+        </section>
+
+        <section class="tab-panel" data-panel="gui-scenario">
+            <section class="gui-section">
+                <h2 class="section-title">GUI &amp; Scenario</h2>
+                <div class="gui-stage-card gui-stage-card-full" aria-label="GUI image placeholder"></div>
+            </section>
+        </section>
+    </div>
 
     <div id="project-modal" class="modal">
         <div class="modal-content">
@@ -31,7 +177,7 @@
     </div>
 
     <footer>
-        <p>&copy; 2023 Service Design Class</p>
+        <p>&copy; 2026 Service Design Class</p>
     </footer>
 
     <script src="main.js"></script>

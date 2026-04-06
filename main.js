@@ -38,6 +38,8 @@ const modalImage = document.getElementById('modal-image');
 const modalDescription = document.getElementById('modal-description');
 const closeButton = document.getElementsByClassName('close-button')[0];
 const themeToggle = document.getElementById('theme-toggle');
+const tabButtons = document.querySelectorAll('.tab-button');
+const tabPanels = document.querySelectorAll('.tab-panel');
 const themeStorageKey = 'service-design-theme';
 
 const getPreferredTheme = () => {
@@ -68,6 +70,24 @@ themeToggle.addEventListener('click', () => {
   applyTheme(nextTheme);
 });
 
+const setActiveTab = tabName => {
+  tabButtons.forEach(button => {
+    const isActive = button.dataset.tab === tabName;
+    button.classList.toggle('active', isActive);
+    button.setAttribute('aria-selected', String(isActive));
+  });
+
+  tabPanels.forEach(panel => {
+    panel.classList.toggle('active', panel.dataset.panel === tabName);
+  });
+};
+
+tabButtons.forEach(button => {
+  button.addEventListener('click', () => {
+    setActiveTab(button.dataset.tab);
+  });
+});
+
 closeButton.addEventListener('click', () => {
   modal.style.display = 'none';
 });
@@ -78,27 +98,29 @@ window.addEventListener('click', event => {
   }
 });
 
-projects.forEach(project => {
-  const projectCard = document.createElement('div');
-  projectCard.classList.add('project-card');
+if (projectGallery) {
+  projects.forEach(project => {
+    const projectCard = document.createElement('div');
+    projectCard.classList.add('project-card');
 
-  const projectImage = document.createElement('img');
-  projectImage.src = project.imageUrl;
-  projectImage.alt = project.title;
+    const projectImage = document.createElement('img');
+    projectImage.src = project.imageUrl;
+    projectImage.alt = project.title;
 
-  const projectTitle = document.createElement('h3');
-  projectTitle.textContent = project.title;
+    const projectTitle = document.createElement('h3');
+    projectTitle.textContent = project.title;
 
-  projectCard.appendChild(projectImage);
-  projectCard.appendChild(projectTitle);
+    projectCard.appendChild(projectImage);
+    projectCard.appendChild(projectTitle);
 
-  projectCard.addEventListener('click', () => {
-    modalTitle.textContent = project.title;
-    modalImage.src = project.imageUrl;
-    modalImage.alt = project.title;
-    modalDescription.textContent = project.description;
-    modal.style.display = 'block';
+    projectCard.addEventListener('click', () => {
+      modalTitle.textContent = project.title;
+      modalImage.src = project.imageUrl;
+      modalImage.alt = project.title;
+      modalDescription.textContent = project.description;
+      modal.style.display = 'block';
+    });
+
+    projectGallery.appendChild(projectCard);
   });
-
-  projectGallery.appendChild(projectCard);
-});
+}
