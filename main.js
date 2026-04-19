@@ -100,6 +100,33 @@ const applyAccentColor = ({ r, g, b }, save = true) => {
   }
 };
 
+// --- Hero image upload ---
+
+document.getElementById('hero-image-input').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  const idx = currentColorWorkspace === 'a' ? 0 : 1;
+  const heroCopy = document.querySelectorAll('.hero-col')[idx].querySelector('.hero-copy');
+  heroCopy.style.backgroundImage = `var(--hero-overlay), url(${url})`;
+  heroCopy.style.backgroundSize = 'cover';
+  heroCopy.style.backgroundPosition = 'center';
+  e.target.value = '';
+});
+
+document.getElementById('hero-avatar-input').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  const idx = currentColorWorkspace === 'a' ? 0 : 1;
+  const avatar = document.querySelectorAll('.hero-col')[idx].querySelector('.hero-avatar');
+  avatar.style.backgroundImage = `url(${url})`;
+  avatar.style.backgroundSize = 'cover';
+  avatar.style.backgroundPosition = 'center';
+  avatar.style.borderStyle = 'solid';
+  e.target.value = '';
+});
+
 // --- Theme panel open / close via avatar click ---
 
 const openThemePanel = (avatar, workspaceKey) => {
@@ -165,6 +192,70 @@ document.getElementById('hex-input').addEventListener('change', e => {
   if (rgb) applyAccentColor(rgb);
 });
 
+// --- Text editing ---
+
+const TEXT_SELECTORS = [
+  '.hero-copy h1',
+  '.hero-copy p',
+  '.section-title',
+  '.info-card p',
+  '.keyword-card h3',
+  '.keyword-copy h4',
+  '.keyword-card p',
+  '.persona-card h3',
+  '.persona-meta p',
+  '.persona-quote blockquote',
+  '.persona-notes p',
+  '.interview-copy p',
+  '.interview-name',
+  '.interview-gallery-card span',
+].join(', ');
+
+const initTextEdit = container => {
+  container.querySelectorAll(TEXT_SELECTORS).forEach(el => {
+    if (el.dataset.editReady) return;
+    el.dataset.editReady = '1';
+    el.contentEditable = 'true';
+    el.spellcheck = false;
+  });
+};
+
+// --- Image upload (all placeholder boxes) ---
+
+const IMAGE_BOX_SELECTORS = [
+  '.branding-card',
+  '.keyword-image',
+  '.persona-image',
+  '.interview-image',
+  '.interview-gallery-card',
+  '.journey-map-card',
+  '.architecture-map-card',
+  '.blueprint-map-card',
+  '.gui-stage-card',
+].join(', ');
+
+const initImageUpload = container => {
+  container.querySelectorAll(IMAGE_BOX_SELECTORS).forEach(box => {
+    if (box.dataset.uploadReady) return;
+    box.dataset.uploadReady = '1';
+    box.style.cursor = 'pointer';
+    box.addEventListener('click', () => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.addEventListener('change', () => {
+        const file = input.files[0];
+        if (!file) return;
+        box.style.backgroundImage = `url(${URL.createObjectURL(file)})`;
+        box.style.backgroundSize = 'cover';
+        box.style.backgroundPosition = 'center';
+        box.style.borderStyle = 'solid';
+      });
+      input.click();
+    });
+  });
+};
+
 // --- Video upload ---
 
 document.querySelectorAll('.video-input').forEach(input => {
@@ -224,6 +315,8 @@ const switchWorkspace = key => {
     const dest = document.querySelector('.workspace[data-workspace="b"]');
     dest.innerHTML = src.innerHTML;
     initTabs(dest);
+    initImageUpload(dest);
+    initTextEdit(dest);
     workspaceBReady = true;
   }
 };
@@ -232,8 +325,8 @@ const switchWorkspace = key => {
 
 document.querySelectorAll('.hero-col').forEach((col, i, cols) => {
   col.addEventListener('click', e => {
-    // Don't trigger workspace switch when clicking avatar (color panel)
     if (e.target.closest('.hero-avatar')) return;
+    if (e.target.isContentEditable) return;
 
     cols.forEach(c => c.classList.remove('active'));
     col.classList.add('active');
@@ -258,3 +351,6 @@ window.addEventListener('click', e => {
 applyTheme(workspaceThemes['a'], 'a', false);
 applyAccentColor(workspaceColors['a'], false);
 initTabs(document.querySelector('.workspace[data-workspace="a"]'));
+initImageUpload(document.querySelector('.workspace[data-workspace="a"]'));
+initTextEdit(document.querySelector('.workspace[data-workspace="a"]'));
+initTextEdit(document.querySelector('header'));

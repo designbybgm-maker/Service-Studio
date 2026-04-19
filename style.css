@@ -275,6 +275,37 @@ header p {
     border-color: var(--accent);
 }
 
+.hero-image-upload-btn {
+    display: block;
+    width: 100%;
+    padding: 0.45rem 0.7rem;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--muted-text);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+.hero-image-upload-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+[contenteditable]:focus {
+    outline: none;
+    border-radius: 6px;
+    box-shadow: 0 0 0 2px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.4);
+}
+
+[contenteditable]:hover {
+    cursor: text;
+}
+
 .workspace {
     display: none;
 }
@@ -362,12 +393,39 @@ body[data-theme='dark'] .tab-button.active {
 }
 
 .gui-stage-card-full {
-    min-height: 2560px;
+    min-height: 1760px;
 }
 
 .hero-avatar:hover {
     border-color: var(--accent);
     background: linear-gradient(135deg, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.22), rgba(255, 255, 255, 0.08));
+}
+
+.branding-card,
+.keyword-image,
+.persona-image,
+.interview-image,
+.interview-gallery-card,
+.journey-map-card,
+.architecture-map-card,
+.blueprint-map-card,
+.gui-stage-card {
+    cursor: pointer;
+    transition: border-color 0.2s ease, opacity 0.2s ease;
+}
+
+.branding-card:hover,
+.keyword-image:hover,
+.persona-image:hover,
+.interview-image:hover,
+.interview-gallery-card:hover,
+.journey-map-card:hover,
+.architecture-map-card:hover,
+.blueprint-map-card:hover,
+.gui-stage-card:hover {
+    border-color: var(--accent);
+    border-style: solid;
+    opacity: 0.85;
 }
 
 .info-section {
@@ -405,7 +463,7 @@ body[data-theme='dark'] .tab-button.active {
 
 .branding-card {
     width: 100%;
-    min-height: 320px;
+    min-height: 255px;
     border-radius: 24px;
     border: 1px dashed var(--border-color);
     background: linear-gradient(135deg, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.08), rgba(255, 255, 255, 0.05));
@@ -468,7 +526,7 @@ body[data-theme='dark'] .tab-button.active {
     align-items: center;
     justify-content: center;
     width: 100%;
-    min-height: 360px;
+    aspect-ratio: 16 / 9;
     border-radius: 24px;
     border: 1px dashed var(--border-color);
     background: linear-gradient(135deg, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.08), rgba(255, 255, 255, 0.05));
@@ -605,7 +663,7 @@ body[data-theme='dark'] .tab-button.active {
 }
 
 .interview-card {
-    height: 220px;
+    height: auto;
     padding: 1.5rem;
     border: 1px solid var(--border-color);
     border-radius: 24px;
@@ -621,16 +679,17 @@ body[data-theme='dark'] .tab-button.active {
 
 .interview-image {
     width: 100%;
-    aspect-ratio: 4 / 5;
-    border-radius: 18px;
+    aspect-ratio: 1 / 1;
+    border-radius: 12px;
     border: 1px dashed var(--border-color);
     background: linear-gradient(135deg, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.08), rgba(255, 255, 255, 0.05));
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
 }
 
 .interview-name {
     margin: 0;
     font-weight: 700;
+    text-align: center;
 }
 
 .interview-copy {
@@ -650,7 +709,7 @@ body[data-theme='dark'] .tab-button.active {
     position: relative;
     display: flex;
     align-items: flex-end;
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 4 / 2;
     padding: 1rem;
     border-radius: 24px;
     border: 1px dashed var(--border-color);
@@ -678,7 +737,7 @@ body[data-theme='dark'] .tab-button.active {
 
 .journey-map-card {
     width: 100%;
-    min-height: 320px;
+    min-height: 480px;
     border-radius: 24px;
     border: 1px dashed var(--border-color);
     background: linear-gradient(135deg, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.08), rgba(255, 255, 255, 0.05));
@@ -693,7 +752,7 @@ body[data-theme='dark'] .tab-button.active {
 
 .architecture-map-card {
     width: 100%;
-    min-height: 640px;
+    min-height: 819px;
     border-radius: 24px;
     border: 1px dashed var(--border-color);
     background: linear-gradient(135deg, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.08), rgba(255, 255, 255, 0.05));
@@ -708,7 +767,7 @@ body[data-theme='dark'] .tab-button.active {
 
 .blueprint-map-card {
     width: 100%;
-    min-height: 480px;
+    min-height: 819px;
     border-radius: 24px;
     border: 1px dashed var(--border-color);
     background: linear-gradient(135deg, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.08), rgba(255, 255, 255, 0.05));
