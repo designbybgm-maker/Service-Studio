@@ -288,14 +288,59 @@ const initTabs = container => {
       if (isActive) {
         panel.style.display = 'block';
         requestAnimationFrame(() => panel.classList.add('active'));
+        const video = panel.querySelector('.video-player');
+        if (video && !video.hidden) {
+          video.currentTime = 0;
+          video.play();
+        }
       } else {
         panel.classList.remove('active');
         panel.style.display = 'none';
+        const video = panel.querySelector('.video-player');
+        if (video) video.pause();
       }
     });
   };
 
   buttons.forEach(btn => btn.addEventListener('click', () => setActiveTab(btn.dataset.tab)));
+};
+
+// --- Tab auto-advance ---
+
+const TAB_ORDER = ['research', 'empathize', 'design', 'gui-scenario'];
+let autoAdvanceTimer = null;
+
+const startAutoAdvance = container => {
+  stopAutoAdvance();
+  autoAdvanceTimer = setInterval(() => {
+    const activeBtn = container.querySelector('.tab-button.active');
+    if (!activeBtn) return;
+    const currentIdx = TAB_ORDER.indexOf(activeBtn.dataset.tab);
+    const isLast = currentIdx === TAB_ORDER.length - 1;
+
+    if (isLast) {
+      // 마지막 탭이면 헤더의 다음 워크스페이스로 전환 후 Discover부터 시작
+      const heroCols = document.querySelectorAll('.hero-col');
+      const activeColIdx = [...heroCols].findIndex(c => c.classList.contains('active'));
+      const nextColIdx = (activeColIdx + 1) % heroCols.length;
+      heroCols[nextColIdx].click();
+      // 다음 워크스페이스의 첫 번째 탭(Discover)으로 이동
+      const nextKey = nextColIdx === 0 ? 'a' : 'b';
+      const nextContainer = document.querySelector(`.workspace[data-workspace="${nextKey}"]`);
+      const firstBtn = nextContainer?.querySelector(`.tab-button[data-tab="${TAB_ORDER[0]}"]`);
+      if (firstBtn) firstBtn.click();
+    } else {
+      const nextBtn = container.querySelector(`.tab-button[data-tab="${TAB_ORDER[currentIdx + 1]}"]`);
+      if (nextBtn) nextBtn.click();
+    }
+  }, 5000);
+};
+
+const stopAutoAdvance = () => {
+  if (autoAdvanceTimer) {
+    clearInterval(autoAdvanceTimer);
+    autoAdvanceTimer = null;
+  }
 };
 
 // --- Workspace switching ---
@@ -305,10 +350,10 @@ let workspaceBReady = false;
 
 const switchWorkspace = key => {
   workspaces.forEach(ws => ws.classList.toggle('active', ws.dataset.workspace === key));
-  // Apply this workspace's accent color and theme
   currentColorWorkspace = key;
   applyAccentColor(workspaceColors[key], false);
   applyTheme(workspaceThemes[key], key, false);
+  startAutoAdvance(document.querySelector(`.workspace[data-workspace="${key}"]`));
 
   if (key === 'b' && !workspaceBReady) {
     const src = document.querySelector('.workspace[data-workspace="a"]');
@@ -350,7 +395,9 @@ window.addEventListener('click', e => {
 
 applyTheme(workspaceThemes['a'], 'a', false);
 applyAccentColor(workspaceColors['a'], false);
-initTabs(document.querySelector('.workspace[data-workspace="a"]'));
-initImageUpload(document.querySelector('.workspace[data-workspace="a"]'));
-initTextEdit(document.querySelector('.workspace[data-workspace="a"]'));
+const workspaceA = document.querySelector('.workspace[data-workspace="a"]');
+initTabs(workspaceA);
+initImageUpload(workspaceA);
+initTextEdit(workspaceA);
 initTextEdit(document.querySelector('header'));
+startAutoAdvance(workspaceA);

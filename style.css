@@ -39,7 +39,7 @@ body {
     font-family: 'Inter', sans-serif;
     margin: 0;
     background:
-        radial-gradient(circle at top, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.12), transparent 32%),
+        radial-gradient(ellipse 150% 100% at top, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.28), transparent 100%),
         linear-gradient(180deg, var(--surface-strong), var(--page-bg));
     color: var(--text-color);
     transition: background-color 0.25s ease, color 0.25s ease;
