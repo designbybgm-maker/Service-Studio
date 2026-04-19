@@ -6,8 +6,35 @@ const closeButton = document.getElementsByClassName('close-button')[0];
 const themePanel = document.getElementById('theme-panel');
 const colorPreview = document.getElementById('color-preview');
 
-// --- Per-workspace state ---
+// =====================
+// IndexedDB (이미지/비디오 영구 저장)
+// =====================
+let db;
 
+const openDB = () => new Promise((resolve, reject) => {
+  const req = indexedDB.open('service-studio', 1);
+  req.onupgradeneeded = e => e.target.result.createObjectStore('media');
+  req.onsuccess = e => { db = e.target.result; resolve(); };
+  req.onerror = () => reject(req.error);
+});
+
+const dbSave = (key, value) => new Promise((resolve, reject) => {
+  const tx = db.transaction('media', 'readwrite');
+  tx.objectStore('media').put(value, key);
+  tx.oncomplete = resolve;
+  tx.onerror = () => reject(tx.error);
+});
+
+const dbLoad = key => new Promise(resolve => {
+  const tx = db.transaction('media', 'readonly');
+  const req = tx.objectStore('media').get(key);
+  req.onsuccess = () => resolve(req.result || null);
+  req.onerror = () => resolve(null);
+});
+
+// =====================
+// 워크스페이스별 상태
+// =====================
 let currentColorWorkspace = 'a';
 
 const defaultColors = {
@@ -29,18 +56,12 @@ const getStoredTheme = key => {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 };
 
-const workspaceColors = {
-  a: getStoredColor('a'),
-  b: getStoredColor('b'),
-};
+const workspaceColors = { a: getStoredColor('a'), b: getStoredColor('b') };
+const workspaceThemes = { a: getStoredTheme('a'), b: getStoredTheme('b') };
 
-const workspaceThemes = {
-  a: getStoredTheme('a'),
-  b: getStoredTheme('b'),
-};
-
-// --- Light / Dark mode ---
-
+// =====================
+// 라이트 / 다크 모드
+// =====================
 const applyTheme = (theme, key, save = true) => {
   document.body.dataset.theme = theme;
   if (save) {
@@ -56,8 +77,9 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
   btn.addEventListener('click', () => applyTheme(btn.dataset.mode, currentColorWorkspace));
 });
 
-// --- Accent color ---
-
+// =====================
+// 테마 컬러
+// =====================
 const hexToRgb = hex => {
   const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return m ? { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) } : null;
@@ -83,7 +105,6 @@ const applyAccentColor = ({ r, g, b }, save = true) => {
     el.style.setProperty('--accent-g', g);
     el.style.setProperty('--accent-b', b);
   }
-
   document.getElementById('slider-r').value = r;
   document.getElementById('slider-g').value = g;
   document.getElementById('slider-b').value = b;
@@ -93,61 +114,75 @@ const applyAccentColor = ({ r, g, b }, save = true) => {
   document.getElementById('hex-input').value = hex;
   colorPreview.style.background = hex;
   updateSliderTracks(r, g, b);
-
   if (save) {
     workspaceColors[currentColorWorkspace] = { r, g, b };
     localStorage.setItem(`service-design-accent-${currentColorWorkspace}`, JSON.stringify({ r, g, b }));
   }
 };
 
-// --- Hero image upload ---
-
-document.getElementById('hero-image-input').addEventListener('change', e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const url = URL.createObjectURL(file);
-  const idx = currentColorWorkspace === 'a' ? 0 : 1;
-  const heroCopy = document.querySelectorAll('.hero-col')[idx].querySelector('.hero-copy');
+// =====================
+// 헤더 배경 / 로고 업로드
+// =====================
+const applyHeroBg = (heroCopy, blob) => {
+  const url = URL.createObjectURL(blob);
   heroCopy.style.backgroundImage = `var(--hero-overlay), url(${url})`;
   heroCopy.style.backgroundSize = 'cover';
   heroCopy.style.backgroundPosition = 'center';
-  e.target.value = '';
-});
+};
 
-document.getElementById('hero-avatar-input').addEventListener('change', e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const url = URL.createObjectURL(file);
-  const idx = currentColorWorkspace === 'a' ? 0 : 1;
-  const avatar = document.querySelectorAll('.hero-col')[idx].querySelector('.hero-avatar');
+const applyHeroAvatar = (avatar, blob) => {
+  const url = URL.createObjectURL(blob);
   avatar.style.backgroundImage = `url(${url})`;
   avatar.style.backgroundSize = 'cover';
   avatar.style.backgroundPosition = 'center';
   avatar.style.borderStyle = 'solid';
+};
+
+document.getElementById('hero-image-input').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const idx = currentColorWorkspace === 'a' ? 0 : 1;
+  const heroCopy = document.querySelectorAll('.hero-col')[idx].querySelector('.hero-copy');
+  applyHeroBg(heroCopy, file);
+  await dbSave(`hero-bg-${currentColorWorkspace}`, file);
   e.target.value = '';
 });
 
-// --- Theme panel open / close via avatar click ---
+document.getElementById('hero-avatar-input').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const idx = currentColorWorkspace === 'a' ? 0 : 1;
+  const avatar = document.querySelectorAll('.hero-col')[idx].querySelector('.hero-avatar');
+  applyHeroAvatar(avatar, file);
+  await dbSave(`hero-avatar-${currentColorWorkspace}`, file);
+  e.target.value = '';
+});
 
+const restoreHeroImages = async () => {
+  const cols = document.querySelectorAll('.hero-col');
+  for (const key of ['a', 'b']) {
+    const idx = key === 'a' ? 0 : 1;
+    const bgBlob = await dbLoad(`hero-bg-${key}`);
+    if (bgBlob) applyHeroBg(cols[idx].querySelector('.hero-copy'), bgBlob);
+    const avatarBlob = await dbLoad(`hero-avatar-${key}`);
+    if (avatarBlob) applyHeroAvatar(cols[idx].querySelector('.hero-avatar'), avatarBlob);
+  }
+};
+
+// =====================
+// 테마 패널 열기/닫기
+// =====================
 const openThemePanel = (avatar, workspaceKey) => {
   currentColorWorkspace = workspaceKey;
-  // Load this workspace's color and theme into the panel
   applyAccentColor(workspaceColors[workspaceKey], false);
   document.querySelectorAll('.mode-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.mode === workspaceThemes[workspaceKey]);
   });
-
-  // Position panel near the avatar
   const rect = avatar.getBoundingClientRect();
   const panelWidth = 228;
   let left = rect.left;
   let top = rect.bottom + 8;
-
-  // Keep panel within viewport
-  if (left + panelWidth > window.innerWidth - 16) {
-    left = window.innerWidth - panelWidth - 16;
-  }
-
+  if (left + panelWidth > window.innerWidth - 16) left = window.innerWidth - panelWidth - 16;
   themePanel.style.left = `${left}px`;
   themePanel.style.top = `${top}px`;
   themePanel.hidden = false;
@@ -166,14 +201,9 @@ document.querySelectorAll('.hero-avatar').forEach((avatar, i) => {
 });
 
 document.addEventListener('click', e => {
-  if (!themePanel.hidden && !themePanel.contains(e.target)) {
-    themePanel.hidden = true;
-  }
+  if (!themePanel.hidden && !themePanel.contains(e.target)) themePanel.hidden = true;
 });
-
 themePanel.addEventListener('click', e => e.stopPropagation());
-
-// --- RGB sliders ---
 
 ['r', 'g', 'b'].forEach(ch => {
   document.getElementById(`slider-${ch}`).addEventListener('input', () => {
@@ -184,16 +214,100 @@ themePanel.addEventListener('click', e => e.stopPropagation());
   });
 });
 
-// --- Hex input ---
-
 document.getElementById('hex-input').addEventListener('change', e => {
   const val = e.target.value.trim();
   const rgb = hexToRgb(val.startsWith('#') ? val : '#' + val);
   if (rgb) applyAccentColor(rgb);
 });
 
-// --- Text editing ---
+// =====================
+// 이미지 업로드 (영구 저장)
+// =====================
+const IMAGE_BOX_SELECTORS = [
+  '.branding-card',
+  '.keyword-image',
+  '.persona-image',
+  '.interview-image',
+  '.interview-gallery-card',
+  '.journey-map-card',
+  '.architecture-map-card',
+  '.blueprint-map-card',
+  '.gui-stage-card',
+].join(', ');
 
+const applyImageToBox = (box, blob) => {
+  const url = URL.createObjectURL(blob);
+  box.style.backgroundImage = `url(${url})`;
+  box.style.backgroundSize = 'cover';
+  box.style.backgroundPosition = 'center';
+  box.style.borderStyle = 'solid';
+};
+
+const initImageUpload = (container, workspaceKey) => {
+  container.querySelectorAll(IMAGE_BOX_SELECTORS).forEach((box, i) => {
+    if (box.dataset.uploadReady) return;
+    box.dataset.uploadReady = '1';
+    const mediaKey = `img-${workspaceKey}-${i}`;
+    box.style.cursor = 'pointer';
+    box.addEventListener('click', () => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.addEventListener('change', async () => {
+        const file = input.files[0];
+        if (!file) return;
+        await dbSave(mediaKey, file);
+        applyImageToBox(box, file);
+      });
+      input.click();
+    });
+  });
+};
+
+const restoreImages = async (container, workspaceKey) => {
+  const boxes = [...container.querySelectorAll(IMAGE_BOX_SELECTORS)];
+  for (let i = 0; i < boxes.length; i++) {
+    const blob = await dbLoad(`img-${workspaceKey}-${i}`);
+    if (blob) applyImageToBox(boxes[i], blob);
+  }
+};
+
+// =====================
+// 비디오 업로드 (영구 저장)
+// =====================
+const applyVideoToPlayer = (player, placeholder, blob) => {
+  player.src = URL.createObjectURL(blob);
+  player.hidden = false;
+  if (placeholder) placeholder.hidden = true;
+};
+
+const initVideoUpload = (container, workspaceKey) => {
+  container.querySelectorAll('.video-input').forEach(input => {
+    if (input.dataset.videoReady) return;
+    input.dataset.videoReady = '1';
+    input.addEventListener('change', async () => {
+      const file = input.files[0];
+      if (!file) return;
+      const box = input.closest('.video-upload-box');
+      const player = box.querySelector('.video-player');
+      const placeholder = box.querySelector('.video-placeholder');
+      await dbSave(`video-${workspaceKey}`, file);
+      applyVideoToPlayer(player, placeholder, file);
+    });
+  });
+};
+
+const restoreVideo = async (container, workspaceKey) => {
+  const blob = await dbLoad(`video-${workspaceKey}`);
+  if (!blob) return;
+  const player = container.querySelector('.video-player');
+  const placeholder = container.querySelector('.video-placeholder');
+  if (player) applyVideoToPlayer(player, placeholder, blob);
+};
+
+// =====================
+// 텍스트 편집 (localStorage 저장)
+// =====================
 const TEXT_SELECTORS = [
   '.hero-copy h1',
   '.hero-copy p',
@@ -211,68 +325,34 @@ const TEXT_SELECTORS = [
   '.interview-gallery-card span',
 ].join(', ');
 
-const initTextEdit = container => {
-  container.querySelectorAll(TEXT_SELECTORS).forEach(el => {
+const debounce = (fn, ms) => {
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+};
+
+const initTextEdit = (container, workspaceKey) => {
+  container.querySelectorAll(TEXT_SELECTORS).forEach((el, i) => {
     if (el.dataset.editReady) return;
     el.dataset.editReady = '1';
     el.contentEditable = 'true';
     el.spellcheck = false;
+    const textKey = `text-${workspaceKey}-${i}`;
+    el.addEventListener('input', debounce(() => {
+      localStorage.setItem(textKey, el.innerHTML);
+    }, 400));
   });
 };
 
-// --- Image upload (all placeholder boxes) ---
-
-const IMAGE_BOX_SELECTORS = [
-  '.branding-card',
-  '.keyword-image',
-  '.persona-image',
-  '.interview-image',
-  '.interview-gallery-card',
-  '.journey-map-card',
-  '.architecture-map-card',
-  '.blueprint-map-card',
-  '.gui-stage-card',
-].join(', ');
-
-const initImageUpload = container => {
-  container.querySelectorAll(IMAGE_BOX_SELECTORS).forEach(box => {
-    if (box.dataset.uploadReady) return;
-    box.dataset.uploadReady = '1';
-    box.style.cursor = 'pointer';
-    box.addEventListener('click', () => {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*';
-      input.addEventListener('change', () => {
-        const file = input.files[0];
-        if (!file) return;
-        box.style.backgroundImage = `url(${URL.createObjectURL(file)})`;
-        box.style.backgroundSize = 'cover';
-        box.style.backgroundPosition = 'center';
-        box.style.borderStyle = 'solid';
-      });
-      input.click();
-    });
+const restoreText = (container, workspaceKey) => {
+  container.querySelectorAll(TEXT_SELECTORS).forEach((el, i) => {
+    const saved = localStorage.getItem(`text-${workspaceKey}-${i}`);
+    if (saved) el.innerHTML = saved;
   });
 };
 
-// --- Video upload ---
-
-document.querySelectorAll('.video-input').forEach(input => {
-  input.addEventListener('change', () => {
-    const file = input.files[0];
-    if (!file) return;
-    const box = input.closest('.video-upload-box');
-    const player = box.querySelector('.video-player');
-    const placeholder = box.querySelector('.video-placeholder');
-    player.src = URL.createObjectURL(file);
-    player.hidden = false;
-    placeholder.hidden = true;
-  });
-});
-
-// --- Tab switching (scoped per workspace) ---
-
+// =====================
+// 탭 전환
+// =====================
 const initTabs = container => {
   const buttons = container.querySelectorAll('.tab-button');
   const panels = container.querySelectorAll('.tab-panel');
@@ -289,10 +369,7 @@ const initTabs = container => {
         panel.style.display = 'block';
         requestAnimationFrame(() => panel.classList.add('active'));
         const video = panel.querySelector('.video-player');
-        if (video && !video.hidden) {
-          video.currentTime = 0;
-          video.play();
-        }
+        if (video && !video.hidden) { video.currentTime = 0; video.play(); }
       } else {
         panel.classList.remove('active');
         panel.style.display = 'none';
@@ -305,8 +382,9 @@ const initTabs = container => {
   buttons.forEach(btn => btn.addEventListener('click', () => setActiveTab(btn.dataset.tab)));
 };
 
-// --- Tab auto-advance ---
-
+// =====================
+// 탭 자동 전환
+// =====================
 const TAB_ORDER = ['research', 'empathize', 'design', 'gui-scenario'];
 let autoAdvanceTimer = null;
 
@@ -317,14 +395,11 @@ const startAutoAdvance = container => {
     if (!activeBtn) return;
     const currentIdx = TAB_ORDER.indexOf(activeBtn.dataset.tab);
     const isLast = currentIdx === TAB_ORDER.length - 1;
-
     if (isLast) {
-      // 마지막 탭이면 헤더의 다음 워크스페이스로 전환 후 Discover부터 시작
       const heroCols = document.querySelectorAll('.hero-col');
       const activeColIdx = [...heroCols].findIndex(c => c.classList.contains('active'));
       const nextColIdx = (activeColIdx + 1) % heroCols.length;
       heroCols[nextColIdx].click();
-      // 다음 워크스페이스의 첫 번째 탭(Discover)으로 이동
       const nextKey = nextColIdx === 0 ? 'a' : 'b';
       const nextContainer = document.querySelector(`.workspace[data-workspace="${nextKey}"]`);
       const firstBtn = nextContainer?.querySelector(`.tab-button[data-tab="${TAB_ORDER[0]}"]`);
@@ -337,18 +412,17 @@ const startAutoAdvance = container => {
 };
 
 const stopAutoAdvance = () => {
-  if (autoAdvanceTimer) {
-    clearInterval(autoAdvanceTimer);
-    autoAdvanceTimer = null;
-  }
+  if (autoAdvanceTimer) { clearInterval(autoAdvanceTimer); autoAdvanceTimer = null; }
 };
 
-// --- Workspace switching ---
-
+// =====================
+// 워크스페이스 전환
+// =====================
 const workspaces = document.querySelectorAll('.workspace');
 let workspaceBReady = false;
+const workspaceATemplate = document.querySelector('.workspace[data-workspace="a"]').innerHTML;
 
-const switchWorkspace = key => {
+const switchWorkspace = async key => {
   workspaces.forEach(ws => ws.classList.toggle('active', ws.dataset.workspace === key));
   currentColorWorkspace = key;
   applyAccentColor(workspaceColors[key], false);
@@ -356,23 +430,26 @@ const switchWorkspace = key => {
   startAutoAdvance(document.querySelector(`.workspace[data-workspace="${key}"]`));
 
   if (key === 'b' && !workspaceBReady) {
-    const src = document.querySelector('.workspace[data-workspace="a"]');
     const dest = document.querySelector('.workspace[data-workspace="b"]');
-    dest.innerHTML = src.innerHTML;
+    dest.innerHTML = workspaceATemplate;
     initTabs(dest);
-    initImageUpload(dest);
-    initTextEdit(dest);
+    initImageUpload(dest, 'b');
+    initVideoUpload(dest, 'b');
+    initTextEdit(dest, 'b');
+    await restoreImages(dest, 'b');
+    await restoreVideo(dest, 'b');
+    restoreText(dest, 'b');
     workspaceBReady = true;
   }
 };
 
-// --- Hero col toggle ---
-
+// =====================
+// 헤더 탭 클릭
+// =====================
 document.querySelectorAll('.hero-col').forEach((col, i, cols) => {
   col.addEventListener('click', e => {
     if (e.target.closest('.hero-avatar')) return;
     if (e.target.isContentEditable) return;
-
     cols.forEach(c => c.classList.remove('active'));
     col.classList.add('active');
     const key = i === 0 ? 'a' : 'b';
@@ -381,23 +458,37 @@ document.querySelectorAll('.hero-col').forEach((col, i, cols) => {
   });
 });
 
-// --- Modal ---
-
+// =====================
+// 모달
+// =====================
 if (closeButton) {
   closeButton.addEventListener('click', () => { modal.style.display = 'none'; });
 }
-
 window.addEventListener('click', e => {
   if (e.target === modal) modal.style.display = 'none';
 });
 
-// --- Init ---
+// =====================
+// 초기화
+// =====================
+(async () => {
+  await openDB();
 
-applyTheme(workspaceThemes['a'], 'a', false);
-applyAccentColor(workspaceColors['a'], false);
-const workspaceA = document.querySelector('.workspace[data-workspace="a"]');
-initTabs(workspaceA);
-initImageUpload(workspaceA);
-initTextEdit(workspaceA);
-initTextEdit(document.querySelector('header'));
-startAutoAdvance(workspaceA);
+  applyTheme(workspaceThemes['a'], 'a', false);
+  applyAccentColor(workspaceColors['a'], false);
+
+  const workspaceA = document.querySelector('.workspace[data-workspace="a"]');
+  initTabs(workspaceA);
+  initImageUpload(workspaceA, 'a');
+  initVideoUpload(workspaceA, 'a');
+  initTextEdit(workspaceA, 'a');
+  initTextEdit(document.querySelector('header'), 'header');
+
+  await restoreImages(workspaceA, 'a');
+  await restoreVideo(workspaceA, 'a');
+  restoreText(workspaceA, 'a');
+  restoreText(document.querySelector('header'), 'header');
+  await restoreHeroImages();
+
+  startAutoAdvance(workspaceA);
+})();
