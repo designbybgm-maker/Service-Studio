@@ -165,6 +165,21 @@ document.getElementById('hex-input').addEventListener('change', e => {
   if (rgb) applyAccentColor(rgb);
 });
 
+// --- Video upload ---
+
+document.querySelectorAll('.video-input').forEach(input => {
+  input.addEventListener('change', () => {
+    const file = input.files[0];
+    if (!file) return;
+    const box = input.closest('.video-upload-box');
+    const player = box.querySelector('.video-player');
+    const placeholder = box.querySelector('.video-placeholder');
+    player.src = URL.createObjectURL(file);
+    player.hidden = false;
+    placeholder.hidden = true;
+  });
+});
+
 // --- Tab switching (scoped per workspace) ---
 
 const initTabs = container => {
