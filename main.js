@@ -416,31 +416,48 @@ const initSubTabs = container => {
 const initSubTabDelete = (container, workspaceKey) => {
   const guiPanel = container.querySelector('.tab-panel[data-panel="gui-scenario"]');
   if (!guiPanel) return;
+  const guiBtn = guiPanel.querySelector('.sub-tab-button[data-subtab="gui"]');
   const deviceBtn = guiPanel.querySelector('.sub-tab-button[data-subtab="device"]');
   const devicePanel = guiPanel.querySelector('.sub-tab-panel[data-subpanel="device"]');
   const navInner = guiPanel.querySelector('.sub-tab-nav-inner');
   const deleteBtn = guiPanel.querySelector('.sub-tab-delete');
-  if (!deviceBtn || !deleteBtn) return;
+  const restoreBtn = guiPanel.querySelector('.sub-tab-restore');
+  if (!deviceBtn || !deleteBtn || !restoreBtn) return;
 
   const hideDevice = () => {
     if (deviceBtn.classList.contains('active')) {
-      guiPanel.querySelector('.sub-tab-button[data-subtab="gui"]').click();
+      guiBtn.click();
     }
     deviceBtn.hidden = true;
     if (devicePanel) devicePanel.hidden = true;
     if (navInner) navInner.style.gridTemplateColumns = '1fr';
+    restoreBtn.classList.add('visible');
     localStorage.setItem(`sub-tab-device-hidden-${workspaceKey}`, '1');
+  };
+
+  const showDevice = () => {
+    deviceBtn.hidden = false;
+    if (devicePanel) devicePanel.hidden = false;
+    if (navInner) navInner.style.gridTemplateColumns = '';
+    restoreBtn.classList.remove('visible');
+    localStorage.removeItem(`sub-tab-device-hidden-${workspaceKey}`);
   };
 
   if (localStorage.getItem(`sub-tab-device-hidden-${workspaceKey}`) === '1') {
     deviceBtn.hidden = true;
     if (devicePanel) devicePanel.hidden = true;
     if (navInner) navInner.style.gridTemplateColumns = '1fr';
+    restoreBtn.classList.add('visible');
   }
 
   deleteBtn.addEventListener('click', e => {
     e.stopPropagation();
     hideDevice();
+  });
+
+  restoreBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    showDevice();
   });
 };
 

@@ -444,6 +444,39 @@ body[data-theme='dark'] .sub-tab-button.active {
     position: relative;
 }
 
+.sub-tab-restore {
+    position: absolute;
+    top: 0.45rem;
+    right: 0.65rem;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--border-color);
+    color: var(--muted-text);
+    font-size: 0.85rem;
+    font-weight: 700;
+    line-height: 20px;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.15s ease, background 0.15s ease;
+    pointer-events: none;
+    display: none;
+}
+
+.sub-tab-restore.visible {
+    display: block;
+}
+
+.sub-tab-button:hover .sub-tab-restore.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.sub-tab-restore:hover {
+    background: #4caf82;
+    color: #fff;
+}
+
 .sub-tab-delete {
     position: absolute;
     top: 0.45rem;
