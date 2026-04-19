@@ -1,126 +1,234 @@
-const projects = [
-  {
-    title: 'Project 1',
-    imageUrl: 'https://via.placeholder.com/300',
-    description: 'This is a description of project 1.'
-  },
-  {
-    title: 'Project 2',
-    imageUrl: 'https://via.placeholder.com/300',
-    description: 'This is a description of project 2.'
-  },
-  {
-    title: 'Project 3',
-    imageUrl: 'https://via.placeholder.com/300',
-    description: 'This is a description of project 3.'
-  },
-  {
-    title: 'Project 4',
-    imageUrl: 'https://via.placeholder.com/300',
-    description: 'This is a description of project 4.'
-  },
-  {
-    title: 'Project 5',
-    imageUrl: 'https://via.placeholder.com/300',
-    description: 'This is a description of project 5.'
-  },
-  {
-    title: 'Project 6',
-    imageUrl: 'https://via.placeholder.com/300',
-    description: 'This is a description of project 6.'
-  }
-];
-
-const projectGallery = document.getElementById('project-gallery');
 const modal = document.getElementById('project-modal');
 const modalTitle = document.getElementById('modal-title');
 const modalImage = document.getElementById('modal-image');
 const modalDescription = document.getElementById('modal-description');
 const closeButton = document.getElementsByClassName('close-button')[0];
-const themeToggle = document.getElementById('theme-toggle');
-const tabButtons = document.querySelectorAll('.tab-button');
-const tabPanels = document.querySelectorAll('.tab-panel');
+const themePanel = document.getElementById('theme-panel');
+const colorPreview = document.getElementById('color-preview');
+
 const themeStorageKey = 'service-design-theme';
 
-const getPreferredTheme = () => {
-  const storedTheme = localStorage.getItem(themeStorageKey);
+// --- Per-workspace color state ---
 
-  if (storedTheme === 'light' || storedTheme === 'dark') {
-    return storedTheme;
-  }
+let currentColorWorkspace = 'a';
 
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+const defaultColors = {
+  a: { r: 164, g: 79, b: 47 },
+  b: { r: 79, g: 120, b: 164 },
 };
 
-const updateThemeToggleLabel = theme => {
-  themeToggle.textContent = theme === 'dark' ? 'White Mode' : 'Dark Mode';
-  themeToggle.setAttribute('aria-pressed', String(theme === 'dark'));
+const getStoredColor = key => {
+  try {
+    const s = JSON.parse(localStorage.getItem(`service-design-accent-${key}`));
+    if (s && 'r' in s) return s;
+  } catch {}
+  return defaultColors[key];
+};
+
+const workspaceColors = {
+  a: getStoredColor('a'),
+  b: getStoredColor('b'),
+};
+
+// --- Light / Dark mode ---
+
+const getPreferredTheme = () => {
+  const stored = localStorage.getItem(themeStorageKey);
+  if (stored === 'light' || stored === 'dark') return stored;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 };
 
 const applyTheme = theme => {
   document.body.dataset.theme = theme;
   localStorage.setItem(themeStorageKey, theme);
-  updateThemeToggleLabel(theme);
-};
-
-applyTheme(getPreferredTheme());
-
-themeToggle.addEventListener('click', () => {
-  const nextTheme = document.body.dataset.theme === 'dark' ? 'light' : 'dark';
-  applyTheme(nextTheme);
-});
-
-const setActiveTab = tabName => {
-  tabButtons.forEach(button => {
-    const isActive = button.dataset.tab === tabName;
-    button.classList.toggle('active', isActive);
-    button.setAttribute('aria-selected', String(isActive));
-  });
-
-  tabPanels.forEach(panel => {
-    panel.classList.toggle('active', panel.dataset.panel === tabName);
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === theme);
   });
 };
 
-tabButtons.forEach(button => {
-  button.addEventListener('click', () => {
-    setActiveTab(button.dataset.tab);
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => applyTheme(btn.dataset.mode));
+});
+
+// --- Accent color ---
+
+const hexToRgb = hex => {
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return m ? { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) } : null;
+};
+
+const rgbToHex = (r, g, b) =>
+  '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
+
+const updateSliderTracks = (r, g, b) => {
+  document.getElementById('slider-r').style.background =
+    `linear-gradient(to right, rgb(0,${g},${b}), rgb(255,${g},${b}))`;
+  document.getElementById('slider-g').style.background =
+    `linear-gradient(to right, rgb(${r},0,${b}), rgb(${r},255,${b}))`;
+  document.getElementById('slider-b').style.background =
+    `linear-gradient(to right, rgb(${r},${g},0), rgb(${r},${g},255))`;
+};
+
+const applyAccentColor = ({ r, g, b }, save = true) => {
+  const hex = rgbToHex(r, g, b);
+  const root = document.documentElement;
+  root.style.setProperty('--accent', hex);
+  root.style.setProperty('--accent-r', r);
+  root.style.setProperty('--accent-g', g);
+  root.style.setProperty('--accent-b', b);
+
+  document.getElementById('slider-r').value = r;
+  document.getElementById('slider-g').value = g;
+  document.getElementById('slider-b').value = b;
+  document.getElementById('val-r').textContent = r;
+  document.getElementById('val-g').textContent = g;
+  document.getElementById('val-b').textContent = b;
+  document.getElementById('hex-input').value = hex;
+  colorPreview.style.background = hex;
+  updateSliderTracks(r, g, b);
+
+  if (save) {
+    workspaceColors[currentColorWorkspace] = { r, g, b };
+    localStorage.setItem(`service-design-accent-${currentColorWorkspace}`, JSON.stringify({ r, g, b }));
+  }
+};
+
+// --- Theme panel open / close via avatar click ---
+
+const openThemePanel = (avatar, workspaceKey) => {
+  currentColorWorkspace = workspaceKey;
+  // Load this workspace's color into the panel
+  applyAccentColor(workspaceColors[workspaceKey], false);
+
+  // Position panel near the avatar
+  const rect = avatar.getBoundingClientRect();
+  const panelWidth = 228;
+  let left = rect.left;
+  let top = rect.bottom + 8;
+
+  // Keep panel within viewport
+  if (left + panelWidth > window.innerWidth - 16) {
+    left = window.innerWidth - panelWidth - 16;
+  }
+
+  themePanel.style.left = `${left}px`;
+  themePanel.style.top = `${top}px`;
+  themePanel.hidden = false;
+};
+
+document.querySelectorAll('.hero-avatar').forEach((avatar, i) => {
+  avatar.addEventListener('click', e => {
+    e.stopPropagation();
+    const key = i === 0 ? 'a' : 'b';
+    if (!themePanel.hidden && currentColorWorkspace === key) {
+      themePanel.hidden = true;
+    } else {
+      openThemePanel(avatar, key);
+    }
   });
 });
 
-closeButton.addEventListener('click', () => {
-  modal.style.display = 'none';
-});
-
-window.addEventListener('click', event => {
-  if (event.target === modal) {
-    modal.style.display = 'none';
+document.addEventListener('click', e => {
+  if (!themePanel.hidden && !themePanel.contains(e.target)) {
+    themePanel.hidden = true;
   }
 });
 
-if (projectGallery) {
-  projects.forEach(project => {
-    const projectCard = document.createElement('div');
-    projectCard.classList.add('project-card');
+themePanel.addEventListener('click', e => e.stopPropagation());
 
-    const projectImage = document.createElement('img');
-    projectImage.src = project.imageUrl;
-    projectImage.alt = project.title;
+// --- RGB sliders ---
 
-    const projectTitle = document.createElement('h3');
-    projectTitle.textContent = project.title;
-
-    projectCard.appendChild(projectImage);
-    projectCard.appendChild(projectTitle);
-
-    projectCard.addEventListener('click', () => {
-      modalTitle.textContent = project.title;
-      modalImage.src = project.imageUrl;
-      modalImage.alt = project.title;
-      modalDescription.textContent = project.description;
-      modal.style.display = 'block';
-    });
-
-    projectGallery.appendChild(projectCard);
+['r', 'g', 'b'].forEach(ch => {
+  document.getElementById(`slider-${ch}`).addEventListener('input', () => {
+    const r = +document.getElementById('slider-r').value;
+    const g = +document.getElementById('slider-g').value;
+    const b = +document.getElementById('slider-b').value;
+    applyAccentColor({ r, g, b });
   });
+});
+
+// --- Hex input ---
+
+document.getElementById('hex-input').addEventListener('change', e => {
+  const val = e.target.value.trim();
+  const rgb = hexToRgb(val.startsWith('#') ? val : '#' + val);
+  if (rgb) applyAccentColor(rgb);
+});
+
+// --- Tab switching (scoped per workspace) ---
+
+const initTabs = container => {
+  const buttons = container.querySelectorAll('.tab-button');
+  const panels = container.querySelectorAll('.tab-panel');
+
+  const setActiveTab = tabName => {
+    buttons.forEach(btn => {
+      const isActive = btn.dataset.tab === tabName;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-selected', String(isActive));
+    });
+    panels.forEach(panel => {
+      const isActive = panel.dataset.panel === tabName;
+      if (isActive) {
+        panel.style.display = 'block';
+        requestAnimationFrame(() => panel.classList.add('active'));
+      } else {
+        panel.classList.remove('active');
+        panel.style.display = 'none';
+      }
+    });
+  };
+
+  buttons.forEach(btn => btn.addEventListener('click', () => setActiveTab(btn.dataset.tab)));
+};
+
+// --- Workspace switching ---
+
+const workspaces = document.querySelectorAll('.workspace');
+let workspaceBReady = false;
+
+const switchWorkspace = key => {
+  workspaces.forEach(ws => ws.classList.toggle('active', ws.dataset.workspace === key));
+  // Apply this workspace's accent color
+  currentColorWorkspace = key;
+  applyAccentColor(workspaceColors[key], false);
+
+  if (key === 'b' && !workspaceBReady) {
+    const src = document.querySelector('.workspace[data-workspace="a"]');
+    const dest = document.querySelector('.workspace[data-workspace="b"]');
+    dest.innerHTML = src.innerHTML;
+    initTabs(dest);
+    workspaceBReady = true;
+  }
+};
+
+// --- Hero col toggle ---
+
+document.querySelectorAll('.hero-col').forEach((col, i, cols) => {
+  col.addEventListener('click', e => {
+    // Don't trigger workspace switch when clicking avatar (color panel)
+    if (e.target.closest('.hero-avatar')) return;
+
+    cols.forEach(c => c.classList.remove('active'));
+    col.classList.add('active');
+    const key = i === 0 ? 'a' : 'b';
+    col.closest('.header-inner').classList.toggle('flipped', i === 1);
+    switchWorkspace(key);
+  });
+});
+
+// --- Modal ---
+
+if (closeButton) {
+  closeButton.addEventListener('click', () => { modal.style.display = 'none'; });
 }
+
+window.addEventListener('click', e => {
+  if (e.target === modal) modal.style.display = 'none';
+});
+
+// --- Init ---
+
+applyTheme(getPreferredTheme());
+applyAccentColor(workspaceColors['a'], false);
+initTabs(document.querySelector('.workspace[data-workspace="a"]'));
