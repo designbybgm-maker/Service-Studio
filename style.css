@@ -401,12 +401,14 @@ body[data-theme='dark'] .tab-button.active {
 }
 
 .sub-tab-nav-inner {
-    display: flex;
-    gap: 1.25rem;
-    align-items: baseline;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
 }
 
 .sub-tab-button {
+    width: 100%;
+    text-align: center;
     border: none;
     background: transparent;
     color: var(--muted-text);
