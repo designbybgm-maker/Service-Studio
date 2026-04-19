@@ -408,7 +408,7 @@ const startAutoAdvance = container => {
       const nextBtn = container.querySelector(`.tab-button[data-tab="${TAB_ORDER[currentIdx + 1]}"]`);
       if (nextBtn) nextBtn.click();
     }
-  }, 5000);
+  }, 60000);
 };
 
 const stopAutoAdvance = () => {
