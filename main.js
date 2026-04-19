@@ -6,9 +6,7 @@ const closeButton = document.getElementsByClassName('close-button')[0];
 const themePanel = document.getElementById('theme-panel');
 const colorPreview = document.getElementById('color-preview');
 
-const themeStorageKey = 'service-design-theme';
-
-// --- Per-workspace color state ---
+// --- Per-workspace state ---
 
 let currentColorWorkspace = 'a';
 
@@ -25,29 +23,37 @@ const getStoredColor = key => {
   return defaultColors[key];
 };
 
+const getStoredTheme = key => {
+  const stored = localStorage.getItem(`service-design-theme-${key}`);
+  if (stored === 'light' || stored === 'dark') return stored;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+};
+
 const workspaceColors = {
   a: getStoredColor('a'),
   b: getStoredColor('b'),
 };
 
-// --- Light / Dark mode ---
-
-const getPreferredTheme = () => {
-  const stored = localStorage.getItem(themeStorageKey);
-  if (stored === 'light' || stored === 'dark') return stored;
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+const workspaceThemes = {
+  a: getStoredTheme('a'),
+  b: getStoredTheme('b'),
 };
 
-const applyTheme = theme => {
+// --- Light / Dark mode ---
+
+const applyTheme = (theme, key, save = true) => {
   document.body.dataset.theme = theme;
-  localStorage.setItem(themeStorageKey, theme);
+  if (save) {
+    localStorage.setItem(`service-design-theme-${key}`, theme);
+    workspaceThemes[key] = theme;
+  }
   document.querySelectorAll('.mode-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.mode === theme);
   });
 };
 
 document.querySelectorAll('.mode-btn').forEach(btn => {
-  btn.addEventListener('click', () => applyTheme(btn.dataset.mode));
+  btn.addEventListener('click', () => applyTheme(btn.dataset.mode, currentColorWorkspace));
 });
 
 // --- Accent color ---
@@ -71,11 +77,12 @@ const updateSliderTracks = (r, g, b) => {
 
 const applyAccentColor = ({ r, g, b }, save = true) => {
   const hex = rgbToHex(r, g, b);
-  const root = document.documentElement;
-  root.style.setProperty('--accent', hex);
-  root.style.setProperty('--accent-r', r);
-  root.style.setProperty('--accent-g', g);
-  root.style.setProperty('--accent-b', b);
+  for (const el of [document.documentElement, document.body]) {
+    el.style.setProperty('--accent', hex);
+    el.style.setProperty('--accent-r', r);
+    el.style.setProperty('--accent-g', g);
+    el.style.setProperty('--accent-b', b);
+  }
 
   document.getElementById('slider-r').value = r;
   document.getElementById('slider-g').value = g;
@@ -97,8 +104,11 @@ const applyAccentColor = ({ r, g, b }, save = true) => {
 
 const openThemePanel = (avatar, workspaceKey) => {
   currentColorWorkspace = workspaceKey;
-  // Load this workspace's color into the panel
+  // Load this workspace's color and theme into the panel
   applyAccentColor(workspaceColors[workspaceKey], false);
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === workspaceThemes[workspaceKey]);
+  });
 
   // Position panel near the avatar
   const rect = avatar.getBoundingClientRect();
@@ -189,9 +199,10 @@ let workspaceBReady = false;
 
 const switchWorkspace = key => {
   workspaces.forEach(ws => ws.classList.toggle('active', ws.dataset.workspace === key));
-  // Apply this workspace's accent color
+  // Apply this workspace's accent color and theme
   currentColorWorkspace = key;
   applyAccentColor(workspaceColors[key], false);
+  applyTheme(workspaceThemes[key], key, false);
 
   if (key === 'b' && !workspaceBReady) {
     const src = document.querySelector('.workspace[data-workspace="a"]');
@@ -229,6 +240,6 @@ window.addEventListener('click', e => {
 
 // --- Init ---
 
-applyTheme(getPreferredTheme());
+applyTheme(workspaceThemes['a'], 'a', false);
 applyAccentColor(workspaceColors['a'], false);
 initTabs(document.querySelector('.workspace[data-workspace="a"]'));

@@ -27,7 +27,6 @@ body[data-theme='dark'] {
     --border-color: rgba(255, 239, 219, 0.12);
     --shadow-color: rgba(0, 0, 0, 0.35);
     --overlay-color: rgba(0, 0, 0, 0.62);
-    --accent: #ffb38a;
     --hero-overlay: linear-gradient(135deg, rgba(0, 0, 0, 0.56), rgba(0, 0, 0, 0.28));
 }
 
@@ -318,6 +317,17 @@ header p {
     background: var(--accent);
     border-color: var(--accent);
     color: #ffffff;
+}
+
+body[data-theme='dark'] .tab-button {
+    border-color: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.3);
+    color: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.55);
+}
+
+body[data-theme='dark'] .tab-button.active {
+    background: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.18);
+    border-color: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.7);
+    color: var(--accent);
 }
 
 .tab-panels {
