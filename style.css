@@ -409,29 +409,35 @@ body[data-theme='dark'] .tab-button.active {
 .sub-tab-button {
     width: 100%;
     text-align: center;
-    border: none;
-    background: transparent;
+    border: 1px solid var(--border-color);
+    background: var(--surface);
     color: var(--muted-text);
-    border-radius: 0;
-    padding: 0;
+    border-radius: 24px;
+    padding: 0.85rem 1.25rem;
     font: inherit;
     font-size: 1.5rem;
     font-weight: 700;
     letter-spacing: -0.02em;
     cursor: pointer;
-    transition: color 0.2s ease;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    box-shadow: 0 18px 40px -24px var(--shadow-color);
 }
 
 .sub-tab-button.active {
-    color: var(--text-color);
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #ffffff;
 }
 
 body[data-theme='dark'] .sub-tab-button {
-    color: rgba(255, 255, 255, 0.3);
+    border-color: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.3);
+    color: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.55);
 }
 
 body[data-theme='dark'] .sub-tab-button.active {
-    color: var(--text-color);
+    background: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.18);
+    border-color: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.7);
+    color: var(--accent);
 }
 
 .sub-tab-panels {
