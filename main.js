@@ -413,6 +413,37 @@ const initSubTabs = container => {
   buttons.forEach(btn => btn.addEventListener('click', () => setActiveSubTab(btn.dataset.subtab)));
 };
 
+const initSubTabDelete = (container, workspaceKey) => {
+  const guiPanel = container.querySelector('.tab-panel[data-panel="gui-scenario"]');
+  if (!guiPanel) return;
+  const deviceBtn = guiPanel.querySelector('.sub-tab-button[data-subtab="device"]');
+  const devicePanel = guiPanel.querySelector('.sub-tab-panel[data-subpanel="device"]');
+  const navInner = guiPanel.querySelector('.sub-tab-nav-inner');
+  const deleteBtn = guiPanel.querySelector('.sub-tab-delete');
+  if (!deviceBtn || !deleteBtn) return;
+
+  const hideDevice = () => {
+    if (deviceBtn.classList.contains('active')) {
+      guiPanel.querySelector('.sub-tab-button[data-subtab="gui"]').click();
+    }
+    deviceBtn.hidden = true;
+    if (devicePanel) devicePanel.hidden = true;
+    if (navInner) navInner.style.gridTemplateColumns = '1fr';
+    localStorage.setItem(`sub-tab-device-hidden-${workspaceKey}`, '1');
+  };
+
+  if (localStorage.getItem(`sub-tab-device-hidden-${workspaceKey}`) === '1') {
+    deviceBtn.hidden = true;
+    if (devicePanel) devicePanel.hidden = true;
+    if (navInner) navInner.style.gridTemplateColumns = '1fr';
+  }
+
+  deleteBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    hideDevice();
+  });
+};
+
 const resetSubTab = container => {
   const firstSubBtn = container.querySelector('.tab-panel[data-panel="gui-scenario"] .sub-tab-button');
   if (firstSubBtn) firstSubBtn.click();
@@ -437,8 +468,8 @@ const startAutoAdvance = container => {
       const subBtns = [...(container.querySelectorAll('.tab-panel[data-panel="gui-scenario"] .sub-tab-button') || [])];
       const subIdx = activeSubBtn ? subBtns.indexOf(activeSubBtn) : -1;
       if (subIdx >= 0 && subIdx < subBtns.length - 1) {
-        subBtns[subIdx + 1].click();
-        return;
+        const visibleNext = subBtns.slice(subIdx + 1).filter(b => !b.hidden);
+        if (visibleNext.length > 0) { visibleNext[0].click(); return; }
       }
       // 서브탭 마지막이면 워크스페이스 전환
       const heroCols = document.querySelectorAll('.hero-col');
@@ -479,6 +510,7 @@ const switchWorkspace = async key => {
     dest.innerHTML = workspaceATemplate;
     initTabs(dest);
     initSubTabs(dest);
+    initSubTabDelete(dest, 'b');
     initImageUpload(dest, 'b');
     initVideoUpload(dest, 'b');
     initTextEdit(dest, 'b');
@@ -526,6 +558,7 @@ window.addEventListener('click', e => {
   const workspaceA = document.querySelector('.workspace[data-workspace="a"]');
   initTabs(workspaceA);
   initSubTabs(workspaceA);
+  initSubTabDelete(workspaceA, 'a');
   initImageUpload(workspaceA, 'a');
   initVideoUpload(workspaceA, 'a');
   initTextEdit(workspaceA, 'a');
