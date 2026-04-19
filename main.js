@@ -370,6 +370,7 @@ const initTabs = container => {
         requestAnimationFrame(() => panel.classList.add('active'));
         const video = panel.querySelector('.video-player');
         if (video && !video.hidden) { video.currentTime = 0; video.play(); }
+        if (tabName === 'gui-scenario') resetSubTab(container);
       } else {
         panel.classList.remove('active');
         panel.style.display = 'none';
@@ -380,6 +381,41 @@ const initTabs = container => {
   };
 
   buttons.forEach(btn => btn.addEventListener('click', () => setActiveTab(btn.dataset.tab)));
+};
+
+// =====================
+// 서브 탭 (Deliver 내부)
+// =====================
+const initSubTabs = container => {
+  const guiPanel = container.querySelector('.tab-panel[data-panel="gui-scenario"]');
+  if (!guiPanel) return;
+  const buttons = guiPanel.querySelectorAll('.sub-tab-button');
+  const panels = guiPanel.querySelectorAll('.sub-tab-panel');
+
+  const setActiveSubTab = name => {
+    buttons.forEach(btn => {
+      const isActive = btn.dataset.subtab === name;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-selected', String(isActive));
+    });
+    panels.forEach(panel => {
+      const isActive = panel.dataset.subpanel === name;
+      if (isActive) {
+        panel.style.display = 'block';
+        requestAnimationFrame(() => panel.classList.add('active'));
+      } else {
+        panel.classList.remove('active');
+        panel.style.display = 'none';
+      }
+    });
+  };
+
+  buttons.forEach(btn => btn.addEventListener('click', () => setActiveSubTab(btn.dataset.subtab)));
+};
+
+const resetSubTab = container => {
+  const firstSubBtn = container.querySelector('.tab-panel[data-panel="gui-scenario"] .sub-tab-button');
+  if (firstSubBtn) firstSubBtn.click();
 };
 
 // =====================
@@ -396,6 +432,15 @@ const startAutoAdvance = container => {
     const currentIdx = TAB_ORDER.indexOf(activeBtn.dataset.tab);
     const isLast = currentIdx === TAB_ORDER.length - 1;
     if (isLast) {
+      // 서브탭 확인 (gui-scenario 내부)
+      const activeSubBtn = container.querySelector('.tab-panel[data-panel="gui-scenario"] .sub-tab-button.active');
+      const subBtns = [...(container.querySelectorAll('.tab-panel[data-panel="gui-scenario"] .sub-tab-button') || [])];
+      const subIdx = activeSubBtn ? subBtns.indexOf(activeSubBtn) : -1;
+      if (subIdx >= 0 && subIdx < subBtns.length - 1) {
+        subBtns[subIdx + 1].click();
+        return;
+      }
+      // 서브탭 마지막이면 워크스페이스 전환
       const heroCols = document.querySelectorAll('.hero-col');
       const activeColIdx = [...heroCols].findIndex(c => c.classList.contains('active'));
       const nextColIdx = (activeColIdx + 1) % heroCols.length;
@@ -433,6 +478,7 @@ const switchWorkspace = async key => {
     const dest = document.querySelector('.workspace[data-workspace="b"]');
     dest.innerHTML = workspaceATemplate;
     initTabs(dest);
+    initSubTabs(dest);
     initImageUpload(dest, 'b');
     initVideoUpload(dest, 'b');
     initTextEdit(dest, 'b');
@@ -479,6 +525,7 @@ window.addEventListener('click', e => {
 
   const workspaceA = document.querySelector('.workspace[data-workspace="a"]');
   initTabs(workspaceA);
+  initSubTabs(workspaceA);
   initImageUpload(workspaceA, 'a');
   initVideoUpload(workspaceA, 'a');
   initTextEdit(workspaceA, 'a');

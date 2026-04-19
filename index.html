@@ -192,7 +192,20 @@
         <section class="tab-panel" data-panel="gui-scenario">
             <section class="gui-section">
                 <h2 class="section-title">GUI &amp; Scenario</h2>
-                <div class="gui-stage-card gui-stage-card-full" aria-label="GUI image placeholder"></div>
+                <nav class="sub-tab-nav">
+                    <div class="sub-tab-nav-inner">
+                        <button class="sub-tab-button active" type="button" data-subtab="gui" aria-selected="true">GUI</button>
+                        <button class="sub-tab-button" type="button" data-subtab="device" aria-selected="false">Device</button>
+                    </div>
+                </nav>
+                <div class="sub-tab-panels">
+                    <div class="sub-tab-panel active" data-subpanel="gui">
+                        <div class="gui-stage-card gui-stage-card-full" aria-label="GUI image placeholder"></div>
+                    </div>
+                    <div class="sub-tab-panel" data-subpanel="device">
+                        <div class="gui-stage-card gui-stage-card-full" aria-label="Device image placeholder"></div>
+                    </div>
+                </div>
             </section>
         </section>
     </div>
