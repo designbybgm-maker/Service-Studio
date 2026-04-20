@@ -470,42 +470,84 @@ const resetSubTab = container => {
 // 탭 자동 전환
 // =====================
 const TAB_ORDER = ['research', 'empathize', 'design', 'gui-scenario'];
+const TAB_DURATION = 30000; // 기본 30초
 let autoAdvanceTimer = null;
-
-const startAutoAdvance = container => {
-  stopAutoAdvance();
-  autoAdvanceTimer = setInterval(() => {
-    const activeBtn = container.querySelector('.tab-button.active');
-    if (!activeBtn) return;
-    const currentIdx = TAB_ORDER.indexOf(activeBtn.dataset.tab);
-    const isLast = currentIdx === TAB_ORDER.length - 1;
-    if (isLast) {
-      // 서브탭 확인 (gui-scenario 내부)
-      const activeSubBtn = container.querySelector('.tab-panel[data-panel="gui-scenario"] .sub-tab-button.active');
-      const subBtns = [...(container.querySelectorAll('.tab-panel[data-panel="gui-scenario"] .sub-tab-button') || [])];
-      const subIdx = activeSubBtn ? subBtns.indexOf(activeSubBtn) : -1;
-      if (subIdx >= 0 && subIdx < subBtns.length - 1) {
-        const visibleNext = subBtns.slice(subIdx + 1).filter(b => !b.hidden);
-        if (visibleNext.length > 0) { visibleNext[0].click(); return; }
-      }
-      // 서브탭 마지막이면 워크스페이스 전환
-      const heroCols = document.querySelectorAll('.hero-col');
-      const activeColIdx = [...heroCols].findIndex(c => c.classList.contains('active'));
-      const nextColIdx = (activeColIdx + 1) % heroCols.length;
-      heroCols[nextColIdx].click();
-      const nextKey = nextColIdx === 0 ? 'a' : 'b';
-      const nextContainer = document.querySelector(`.workspace[data-workspace="${nextKey}"]`);
-      const firstBtn = nextContainer?.querySelector(`.tab-button[data-tab="${TAB_ORDER[0]}"]`);
-      if (firstBtn) firstBtn.click();
-    } else {
-      const nextBtn = container.querySelector(`.tab-button[data-tab="${TAB_ORDER[currentIdx + 1]}"]`);
-      if (nextBtn) nextBtn.click();
-    }
-  }, 60000);
-};
+let autoAdvanceVideoEl = null;
+let autoAdvanceVideoHandler = null;
 
 const stopAutoAdvance = () => {
-  if (autoAdvanceTimer) { clearInterval(autoAdvanceTimer); autoAdvanceTimer = null; }
+  if (autoAdvanceTimer) { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null; }
+  if (autoAdvanceVideoEl && autoAdvanceVideoHandler) {
+    autoAdvanceVideoEl.removeEventListener('ended', autoAdvanceVideoHandler);
+    autoAdvanceVideoEl = null;
+    autoAdvanceVideoHandler = null;
+  }
+};
+
+const doAdvance = container => {
+  const activeBtn = container.querySelector('.tab-button.active');
+  if (!activeBtn) return;
+  const currentIdx = TAB_ORDER.indexOf(activeBtn.dataset.tab);
+  const isLast = currentIdx === TAB_ORDER.length - 1;
+
+  if (isLast) {
+    const activeSubBtn = container.querySelector('.tab-panel[data-panel="gui-scenario"] .sub-tab-button.active');
+    const subBtns = [...(container.querySelectorAll('.tab-panel[data-panel="gui-scenario"] .sub-tab-button') || [])];
+    const subIdx = activeSubBtn ? subBtns.indexOf(activeSubBtn) : -1;
+    if (subIdx >= 0 && subIdx < subBtns.length - 1) {
+      const visibleNext = subBtns.slice(subIdx + 1).filter(b => !b.hidden);
+      if (visibleNext.length > 0) {
+        visibleNext[0].click();
+        scheduleNextAdvance(container);
+        return;
+      }
+    }
+    // 워크스페이스 전환
+    const heroCols = document.querySelectorAll('.hero-col');
+    const activeColIdx = [...heroCols].findIndex(c => c.classList.contains('active'));
+    const nextColIdx = (activeColIdx + 1) % heroCols.length;
+    heroCols[nextColIdx].click();
+    const nextKey = nextColIdx === 0 ? 'a' : 'b';
+    const nextContainer = document.querySelector(`.workspace[data-workspace="${nextKey}"]`);
+    const firstBtn = nextContainer?.querySelector(`.tab-button[data-tab="${TAB_ORDER[0]}"]`);
+    if (firstBtn) firstBtn.click();
+    // switchWorkspace가 startAutoAdvance 호출
+  } else {
+    const nextBtn = container.querySelector(`.tab-button[data-tab="${TAB_ORDER[currentIdx + 1]}"]`);
+    if (nextBtn) nextBtn.click();
+    scheduleNextAdvance(container);
+  }
+};
+
+const scheduleNextAdvance = container => {
+  stopAutoAdvance();
+  const activeBtn = container.querySelector('.tab-button.active');
+  if (!activeBtn) return;
+  const currentTab = activeBtn.dataset.tab;
+
+  if (currentTab === 'research') {
+    const researchPanel = container.querySelector('.tab-panel[data-panel="research"]');
+    const video = researchPanel?.querySelector('.video-player');
+    if (video && !video.hidden && video.src) {
+      if (video.ended) {
+        autoAdvanceTimer = setTimeout(() => doAdvance(container), 2000);
+      } else {
+        autoAdvanceVideoEl = video;
+        autoAdvanceVideoHandler = () => {
+          autoAdvanceTimer = setTimeout(() => doAdvance(container), 2000);
+        };
+        video.addEventListener('ended', autoAdvanceVideoHandler, { once: true });
+      }
+    } else {
+      autoAdvanceTimer = setTimeout(() => doAdvance(container), TAB_DURATION);
+    }
+  } else {
+    autoAdvanceTimer = setTimeout(() => doAdvance(container), TAB_DURATION);
+  }
+};
+
+const startAutoAdvance = container => {
+  scheduleNextAdvance(container);
 };
 
 // =====================
