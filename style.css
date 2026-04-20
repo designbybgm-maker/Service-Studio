@@ -38,10 +38,12 @@ body[data-theme='dark'] {
 body {
     font-family: 'Inter', sans-serif;
     margin: 0;
+    min-height: 100vh;
     background:
         radial-gradient(ellipse 150% 60% at top, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.28), transparent 100%),
         radial-gradient(ellipse 150% 40% at bottom, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.18), transparent 100%),
         var(--page-bg);
+    background-attachment: fixed;
     color: var(--text-color);
     transition: background-color 0.25s ease, color 0.25s ease;
 }
