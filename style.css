@@ -939,11 +939,17 @@ main {
 }
 
 footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
     text-align: center;
-    padding: 1rem;
+    padding: 0.6rem 1rem;
     background-color: var(--surface);
     border-top: 1px solid var(--border-color);
     color: var(--muted-text);
+    z-index: 10;
+    backdrop-filter: blur(12px);
 }
 
 .modal {
