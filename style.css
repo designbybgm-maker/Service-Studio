@@ -39,8 +39,9 @@ body {
     font-family: 'Inter', sans-serif;
     margin: 0;
     background:
-        radial-gradient(ellipse 150% 100% at top, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.28), transparent 100%),
-        linear-gradient(180deg, var(--surface-strong), var(--page-bg));
+        radial-gradient(ellipse 150% 60% at top, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.28), transparent 100%),
+        radial-gradient(ellipse 150% 40% at bottom, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.18), transparent 100%),
+        var(--page-bg);
     color: var(--text-color);
     transition: background-color 0.25s ease, color 0.25s ease;
 }
